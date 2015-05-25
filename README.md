@@ -1,4 +1,4 @@
-# Knowledge bas articles plugin for FIR - Fast Incident Response
+# Knowledge base articles plugin for FIR - Fast Incident Response
 
 [FIR](https://github.com/certsocietegenerale/FIR) (Fast Incident Response by [CERT Société générale](https://cert.societegenerale.com/)) is an cybersecurity incident management platform designed with agility and speed in mind. It allows for easy creation, tracking, and reporting of cybersecurity incidents.
 
