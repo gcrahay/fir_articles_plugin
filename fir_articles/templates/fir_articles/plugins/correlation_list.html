@@ -1,0 +1,45 @@
+{% load url from future %}
+{% load i18n %}
+{% block content %}
+{% if perms.fir_articles %}
+	{% with article_list=correlations.articles.objects %}
+		<h3>{% trans "Articles" %}</h3>
+	{% if article_list %}
+		<table class='table table-hover'>
+			<thead>
+				<tr>
+					<th>{% trans "Date" %}</th>
+					<th>{% trans "Subject" %}</th>
+					<th>{% trans "Category" %}</th>
+					<th>{% trans "Status" %}</th>
+					<th>{% trans "Author" %}</th>
+					{% if perms.fir_articles.modify_articles %}
+					<th>{% trans "Edit" %}</th>
+					{% endif %}
+
+				</tr>
+
+			</thead>
+			<tbody>
+				{% for article in article_list %}
+					<tr class='{{ article.status }}'>
+						<td>{{ article.date|date:"SHORT_DATE_FORMAT" }}</td>
+						<td><a href="{% url 'articles:details' article.id %}">{{ article.subject }}</a></td>
+						<td>{{ article.category }}</td>
+						<td>{{ article.get_status_display }}</td>
+						<td>{{ article.opened_by }}</td>
+						{% if perms.fir_articles.modify_articles %}
+						<td>
+							<a href="{% url 'articles:edit' article.id %}"><span class='glyphicon glyphicon-pencil'></span></a>
+						</td>
+						{% endif %}
+					</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	{% else %}
+	<p>{% trans "No article found." %}</p>
+	{% endif %}
+	{% endwith %}
+{% endif %}
+{% endblock %}

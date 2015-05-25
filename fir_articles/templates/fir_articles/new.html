@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% load url from future %}
+{% load add_css_class %}
+{% load i18n %}
+
+{% block custom_css %}
+<link href="/static/select/select2.css" rel="stylesheet"/>
+<link href="/static/select/select2-bootstrap.css" rel="stylesheet"/>
+<link href="/static/css/bootstrap-datetimepicker.min.css" rel="stylesheet"/>
+
+{% endblock %}
+
+{% block custom_js %}
+<script src="/static/select/select2.min.js"></script>
+<script>
+$(document).ready(function() {
+	$("select#id_category").select2();
+	$('select#id_status').select2({minimumResultsForSearch: -1, width: '90px'});
+});
+</script>
+
+<script src='/static/js/bootstrap-datetimepicker.min.js'></script>
+
+{% endblock %}
+
+
+{% block content %}
+
+	<div class="container-fluid">
+		{% if not article %}
+			<form action="{% url 'articles:new' %}" method="post">
+		{% else %}
+			<form action="{% url 'articles:edit' article.pk %}" method="post">
+		{% endif %}
+
+			<div class="row header">
+				{% if not article %}
+					<h1 class="col-sm-11">{% trans "New article" %}</h1>
+				{% else %}
+					<h1 class="col-sm-11">{% trans "Article" %}: {{ article.subject }}</h1>
+				{% endif %}
+				<div class="col-sm-1">
+					<button class="btn btn-primary" type="submit">{% trans "Save" %}</button>
+				</div>
+			</div>
+
+			<div class="row">
+				{% csrf_token %}
+
+				<div class="col-sm-6">
+					<fieldset>
+
+						<legend>{% trans "Summary" %}</legend>
+						{% if error_message %}
+							<p class='text-error'>{{ error_message }}</p>
+						{% endif %}
+
+						<div class="row">
+							<div class="col-sm-6 form-group{% if form.subject.errors%} has-error{%endif%}">
+								<label for="id_subject">{% trans "Subject" %}</label>
+								{{ form.subject|add_css_class:"form-control" }}
+								{% include 'events/_form_errors.html' with errors=form.subject.errors %}
+							</div>
+						</div>
+						<div class="row">
+							<div class="col-sm-6 form-group{% if form.category.errors%} has-error{%endif%}">
+								<label id="id_category">{% trans "Category" %}</label>
+								{{ form.category|add_css_class:"form-control" }}
+								{% include 'events/_form_errors.html' with errors=form.category.errors %}
+							</div>
+							<div class="col-sm-2 form-group{% if form.status.errors%} has-error{%endif%}">
+								<label id="id_status">{% trans "Status" %}</label>
+								{{ form.status|add_css_class:"form-control" }}
+								{% include 'events/_form_errors.html' with errors=form.status.errors %}
+							</div>
+						</div>
+						<div class="row">
+							<div class="col-sm-6 form-group{% if form.date.errors%} has-error{%endif%}">
+								<label id="id_date">{% trans "Date / Time" %}</label>
+								{{ form.date|add_css_class:"form-control datetime" }}
+								{% include 'events/_form_errors.html' with errors=form.date.errors %}
+							</div>
+						</div>
+					</fieldset>
+				</div>
+			</div>
+			<div class="row">
+				<fieldset class="col-sm-12">
+					<legend>{% trans "Description" %}</legend>
+					{{ form.body|add_css_class:"form-control mce" }}
+					{% include 'events/_form_errors.html' with errors=form.body.errors %}
+				</fieldset>
+				{{ form.non_field_errors }}
+			</div>
+			<button class="btn btn-primary" type="submit">{% trans "Save" %}</button>
+		</form>
+	</div>
+{% endblock %}
+

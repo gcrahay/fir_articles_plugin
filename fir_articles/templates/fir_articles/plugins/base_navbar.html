@@ -1,0 +1,4 @@
+{% load i18n %}
+{% if perms.fir_articles %}
+<li id='articles-nav'><a href="{% url 'articles:list' %}">{% trans "Articles" %}</a></li>
+{% endif %}

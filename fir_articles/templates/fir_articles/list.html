@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block custom_js %}
+    <script src="/static/select/select2.min.js"></script>
+    <script language="JavaScript">
+        $(document).ready(function() {
+            $('#id_status').select2({minimumResultsForSearch: -1});
+        });
+    </script>
+{% endblock %}
+
+{% block custom_css %}
+    <link href="/static/select/select2.css" rel="stylesheet"/>
+<style>
+
+</style>
+{% endblock %}
+
+{% block content %}
+    <div class="row">
+    <form action="{% url 'articles:list' %}" method='post' id='search'>
+        <div class='form-group col-md-4'>
+            <label for="id_category" class="control-label">{% trans "Category" %}</label>
+            <div class='controls'>
+              {{ form.category }}
+            </div>
+          </div>
+        <div class='form-group col-md-1'>
+            <label for="id_status" class="control-label">{% trans "Status" %}</label>
+            <div class='controls'>
+              {{ form.status }}
+            </div>
+          </div>
+        <div class="col-md-1">
+            {% csrf_token %}
+            <label></label>
+            <div class='controls'>
+                <button class="btn btn-primary" type="submit">{% trans "Filter" context "verb" %}</button>
+            </div>
+        </div>
+        <div class="col-md-1 col-md-offset-4">
+            <label></label>
+            <div class='controls'>
+                <a class="btn btn-success" type="button" href="{% url 'articles:new' %}"><i>+</i> {% trans "New article" %}</a>
+            </div>
+        </div>
+    </form>
+    </div>
+{% if articles %}
+	<div class='incident_table' data-order-param='{{ order_param }}' data-asc='{{ asc }}'>
+		<table class='table table-hover table-condensed'>
+			<thead>
+            {% trans "Date" as t_date %}
+            {% trans "Category" as t_category %}
+            {% trans "Subject" as t_subject %}
+            {% trans "Status" as t_status %}
+            {% trans "Last Action" as t_lastaction %}
+            {% trans "Author" as t_author %}
+				<tr>
+					{% include 'events/column.html' with name=t_date field='date' %}
+					{% include 'events/column.html' with name=t_category field='category' %}
+					{% include 'events/column.html' with name=t_subject field='subject' %}
+					{% include 'events/column.html' with name=t_status field='status' %}
+					{% include 'events/column.html' with name=t_author field='opened_by' %}
+					<th>{%  trans "Edit" %}</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for article in articles %}
+					<tr class='{{ article.status }}'>
+						<td class='incident_date_column'>{{ article.date|date:'Y-m-d' }}</td>
+						<td>{{ article.category }}</td>
+                        <td><a href="{% url 'articles:details' article.id %}">{{ article.subject }}</a></td>
+						<td>{{ article.get_status_display }}</td>
+						<td>{{ article.opened_by }}</td>
+						<td>
+							<a href="{% url 'articles:edit' article.id %}"><span class='glyphicon glyphicon-pencil'></span></a>
+						</td>
+					</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+
+		{% if articles.paginator %}
+			<div>
+			    <span class="step-links">
+			        {% if articles.has_previous %}
+			        	<a href='#' class='paginate' data-page='{{ articles.previous_page_number }}'>
+			        		<i class='glyphicon glyphicon-backward'></i> {% trans "previous" %}
+			        	</a>
+			        {% endif %}
+
+			        <span class="current">
+			            {% blocktrans with number=articles.number num_pages=articles.paginator.num_pages %}(page {{ number }} of {{ num_pages }}){% endblocktrans %}
+			        </span>
+
+			        {% if articles.has_next %}
+			        	<a href='#' class='paginate' data-page='{{ articles.next_page_number }}'>
+			        		{% trans "next" %} <i class='glyphicon glyphicon-forward'></i>
+			        	</a>
+			        {% endif %}
+			    </span>
+			</div>
+		{% endif %}
+	</div>
+{% else %}
+	<div class='nothing_to_show'>{% trans "No articles to show." %}</div>
+{% endif %}
+
+{% endblock %}

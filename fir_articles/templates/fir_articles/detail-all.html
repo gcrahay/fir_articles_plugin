@@ -1,0 +1,239 @@
+{% extends 'base.html' %}
+{% load url from future %}
+{% load fir_plugins %}
+{% load fir_artifacts %}
+{% load i18n %}
+
+{% block custom_js %}
+<script type="text/javascript" src='/static/custom_js/hotkeys.js'></script>
+<script src='/static/custom_js/details_actions.js'></script>
+{% endblock %}
+
+
+{% block content %}
+	<div id='details-actions-all'>
+	<div class="details-actions-supmenu" id="details-actions-add">
+		<ul class="list-unstyled">
+			<li><a href="#" id="details-add-file"><i class="glyphicon glyphicon-file"></i>{%  trans "File" %}</a></li>
+			{% if valid_attributes|length > 0 %}
+				<li><a href="#" id="details-add-attribute"><i class="glyphicon glyphicon-list"></i>{%  trans "Attribute" %}</a></li>
+			{% endif %}
+		</ul>
+	</div>
+
+
+	<div id="details-actions">
+		<ul class="list-unstyled">
+			<li><a href="#" id="details-actions-add-link"><i class="glyphicon glyphicon-plus"></i>{%  trans "Add" %}</a></li>
+			<li><a href="#" id='details-actions-comment' data-toggle='modal' data-target='#addComment'>
+				<i class="glyphicon glyphicon-comment"></i>{%  trans "Comment" context "verb" %}
+			</a></li>
+			<li><a href="{% url 'articles:edit' article.id %}"><i class="glyphicon glyphicon-pencil"></i>{%  trans "Edit" %}</a></li>
+			{% if article.status != 'O' %}
+				<li>
+					<form action="{% url 'articles:change_status' article.id 'O' %}" method='POST' class='icon'>
+						{% csrf_token %}
+						<a href='#' class='submit'><i class="glyphicon glyphicon-fire"></i>{% trans "Open" %}</a>
+					</form>
+				</li>
+			{% endif %}
+			{% if article.status != 'A' %}
+				<li>
+					<form action="{% url 'articles:change_status' article.id 'A' %}" method='POST' class='icon'>
+						{% csrf_token %}
+						<a href="#" class='submit'><i class="glyphicon glyphicon-folder-close"></i>{%  trans "Archive" %}</a>
+					</form>
+				</li>
+			{% endif %}
+			{% if article.status != 'D' %}
+				<li>
+					<form action="{% url 'articles:change_status' article.id 'D' %}" method='POST' class='icon'>
+						{% csrf_token %}
+						<a href='#' class='submit'><i class="glyphicon glyphicon-trash"></i>{% trans "Delete" %}</a>
+					</form>
+				</li>
+			{% endif %}
+		</ul>
+	</div>
+	</div>
+
+	<div id="details-container" data-event-id="{{ article.id }}">
+		<div class="row hidden-xs" id="incident-properties">
+			<table class='minitable table'>
+				<tr class='slim'>
+					<td class='head'>{%  trans "Category" %}</td><td class='delim'>{{article.category}}</td>
+					<td class='head'>{%  trans "Status" %}</td><td class='delim'>
+						<span id='event-status' class='label
+							{% if article.status == "O" %}label-success
+							{% elif article.status == "A" %}label-info
+							{% elif article.status == "D"%}label-danger{% endif %}
+						'>
+							{{ article.get_status_display}}
+						</span>
+					</td>
+				</tr>
+			</table>
+		</div>
+
+		<h1>{%  trans "Article" %} / {{article.category}} / {{article.subject}}</h1>
+		<div class="row">
+			<div class="col-sm-7 col-xs-12">
+                {% trans "someone" as someone %}
+				<p><i>{% blocktrans with date=article.date opened_by=article.opened_by|default:someone %}Opened on {{ date }} by {{ opened_by }}{% endblocktrans %}</i></p>
+
+				<div class='widget' id='description'>
+					<h4 class='widget'>{%  trans "Body" %}</h4>
+					<p>{{ article.body|safe }}</p>
+				</div>
+
+			</div>
+
+			<div class="col-sm-5 col-xs-12" id="incident-sidebar">
+
+				{% if valid_attributes|length > 0 %}
+					<div class='widget {% if attributes.count == 0 %}hidden{% endif %}' id='attributes'>
+						<h4 class='widget'>{%  trans "Attributes" %}</h4>
+
+						<table class='table table-condensed'>
+							<thead>
+								<tr>
+									<th>{%  trans "Name" %}</th>
+									<th>{%  trans "Value" %}</th>
+									<th></th>
+								</tr>
+							</thead>
+							<tbody id='attribute_list'>
+								{% include 'fir_articles/_attributes.html' %}
+							</tbody>
+
+							<form id="add-attribute-form" action="{% url 'articles:add_attribute' article.id %}" method="post" data-ajaxform data-action='html' data-target='#attribute_list' data-hide='#attribute_form' data-show='#show_attribute_form'>
+							<tr id="show_attribute_form">
+								<td colspan='3'><a href='#'>+ {%  trans "Add attribute" %}</a></td>
+							</tr>
+							<tr id="attribute_form" class='hidden'>
+							<td class="head">{% csrf_token %}
+								<select name="name">
+									{% for valid_attribute in valid_attributes %}
+									<option value="{{valid_attribute.name}}" data-unit="{{valid_attribute.unit}}">{{valid_attribute.name}}</option>
+									{% endfor %}
+								</select>
+							</td>
+							<td><input type="text" id="attribute-value" name="value" placeholder="value" /></td>
+							<td><button type="submit" class="btn btn-xs btn-link">{%  trans "Add" %}</button></td>
+							</tr>
+							</form>
+						</table>
+					</div>
+				{% endif %}
+            {% with event=article %}
+                {% plugin_point 'details_sidebar' %}
+            {% endwith %}
+			</div>
+		</div>
+
+		<div id='main_tabs' class='tabbable'>
+			<ul class='nav nav-tabs'>
+				<li class='active'>
+					<a href='#tab_comments' data-toggle='tab'>
+						{% trans "Comments" %} (<span id='comment-count'>{{ comments.count }}</span>)
+					</a>
+				</li>
+				{% if artifacts_count > 0 %}
+					<li>
+						<a href='#tab_artifacts' data-toggle='tab'>
+							{% trans "Artifacts" %} ({{ artifacts_count }})
+						</a>
+					</li>
+				{% endif %}
+			</ul>
+		</div>
+
+		<div class='tab-content tabs table-responsive'>
+			<div class='tab-pane active' id='tab_comments'>
+				<table class="table table-hover table-condensed">
+					<thead>
+						<tr>
+							<th><i class='glyphicon glyphicon-calendar'></i></th>
+							<th><i class='glyphicon glyphicon-user'></i></th>
+							<th>{%  trans "Comment" context "noun" %}</th>
+							<th>{%  trans "Action" %}</th>
+							<th></th>
+							<th></th>
+						</tr>
+					</thead>
+					{% for comment in comments.all reversed %}
+						{% include 'fir_articles/_comment.html' %}
+					{% endfor %}
+				</table>
+			</div>
+			<div class='tab-pane' id='tab_artifacts'>
+				{% if article.file_set.count > 0 %}
+					<table class='table table-condensed files-table files fixed'>
+						<tr><th>{%  trans "Filename" %}</th><th>SHA-256</th><th>SHA-1</th><th>MD5</th></tr>
+						{% for f in article.file_set.all %}
+							<tr><td>{{ f.getfilename }}</td>{% for h in f.hashes.all %}<td>{{h}}</td>{% endfor %}</tr>
+						{% endfor %}
+					</table>
+
+					<h3>{%  trans "Other artifacts" %}</h3>
+				{% endif %}
+
+				<table class='table table-condensed artifacts-table artifacts'>
+					<thead>
+						<th class='head'>{%  trans "Type" %}</th>
+						<th>{%  trans "Values" %}</th>
+					</thead>
+					{% for artifact_type in artifacts %}
+						{{ artifact_type|display_artifact:request }}
+					{% endfor %}
+				</table>
+			</div>
+		</div>
+
+		<!-- Modal for comments -->
+		<div id="addComment" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="addCommentLabel" aria-hidden="true">
+			<div class="modal-dialog">
+				<div class="modal-content">
+					<form id="comment_form" method="POST" data-ajaxform data-target='#tab_comments tbody' data-action='prepend' data-new-comment-url="{% url 'articles:comment' article.id %}" data-existing-comment-url="{% url 'articles:update_comment_base' %}">
+					 	<div class="modal-header">
+					    	<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+					    	<h4 id="addCommentLabel" class="modal-title">{% trans "Add comment" %}</h4>
+					  	</div>
+					  	<div class="modal-body">
+							<div>
+								{% csrf_token %}
+								<div class="form-group row">
+									<div class="col-sm-1">
+										<label for="id_action">{%  trans "Date" %}</label>
+									</div>
+									<div class="col-sm-3">
+										<input type="text" id="id_date" name="date" class="datetime" required />
+										<span class='help-block'>
+											{% for error in comment_form.date.errors %}
+												{{error}}
+											{% endfor %}
+										</span>
+									</div>
+								</div>
+
+								<div class="form-group" id="add-comment-area">
+									{{ comment_form.comment }}
+									<span class='help-block'>
+										{% for error in comment_form.comment.errors %}
+											{{error}}
+										{% endfor %}
+									</span>
+								</div>
+							</div>
+					  	</div>
+
+					  	<div class="modal-footer">
+					    	<button class="btn btn-default" data-dismiss="modal" aria-hidden="true">{%  trans "Cancel" %}</button>
+					    	<button type="submit" class="btn btn-primary">{%  trans "Save changes" %}</button>
+					  	</div>
+					</form>
+				</div>
+			</div>
+		</div>
+	</div>
+{% endblock %}
