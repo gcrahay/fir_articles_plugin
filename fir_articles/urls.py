@@ -1,8 +1,8 @@
-from django.conf.urls import patterns, url
+from django.conf.urls import url
 
 from fir_articles import views
 
-urlpatterns = patterns('',
+urlpatterns = [
     url(r'^$', views.list_articles, name='list'),
     url(r'^(?P<article_id>\d+)/$', views.details, name='details'),
     url(r'^new/$', views.new_article, name='new'),
@@ -14,4 +14,4 @@ urlpatterns = patterns('',
     url(r'^(?P<article_id>\d+)/status/(?P<status>[OAD])$', views.change_status, name='change_status'),
     url(r'^(?P<article_id>\d+)/attribute$', views.add_attribute, name='add_attribute'),
     url(r'^(?P<article_id>\d+)/attribute/(?P<attribute_id>\d+)/delete/$', views.delete_attribute, name='delete_attribute'),
-)
+]
